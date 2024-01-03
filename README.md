@@ -23,4 +23,4 @@ Describe each of the type of alerts fired by this agent
 
 The agent behaviour can be verified with the following transactions:
 
-- 0x968e60f81f3b83d6b6db4f449656acc9e5c73f50e9837d85aebb5f8f71998f67 (A ERC1967 proxy contract was created in this transaction, but there is no such a fake standards problem.)
+- 0x2325f3a51f87d80932224ef121f7884c9b1812b22a061979df5331b9caad43d2 in Ethereum (Proxy: 0x407f5490cfa4cba715cb93645c988b504fcf0331; Logic Contract at Storage: 0xc1e97d3fc2810577289ee35e895a4f0e59481700; Real Logic Contract: 0x4674f9cf8fce3e9ff332015a0f0859baa60c2ded.)

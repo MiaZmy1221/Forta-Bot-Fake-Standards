@@ -49,8 +49,8 @@ def alchemy_simulate_transaction(proxy_contract, logic_contract):
     tries = 3
     for i in range(tries):
         try: 
-            # api_key = "Oam-mr3uIVFb_6MKch7XOysSG4euxmCN"
-            api_key = "Rii0ZY5vKrDJKWDXhcv0I7okaP4VK7C-"
+            # use your own api key from Alchemy
+            api_key = "xxx"
             url = "https://eth-mainnet.g.alchemy.com/v2/" + api_key
             payload = {
                 "id": 1,

@@ -3,9 +3,13 @@
 ## Description
 
 This agent identifies instances of fake standards implementation in transactions. 
+
 To achieve this, the bot actively monitors all newly created contracts, evaluating whether each new contract is a proxy contract that implements the ERC-1967 standard. 
+
 For identified proxy contracts, the bot initiates the process by retrieving the logic contract, which is expected to be stored in a fixed storage slot "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc," as per the [ERC-1967 proxy contract pattern](https://eips.ethereum.org/EIPS/eip-1967). 
+
 Subsequently, utilizing a simulation-based approach, the bot extracts the genuine logic contract invoked by the proxy contract when executing its proxied functions. 
+
 In cases where the logic contracts do not align, the bot issues an alert to highlight the presence of a fake standards implementation problem.
 
 ## Configuration

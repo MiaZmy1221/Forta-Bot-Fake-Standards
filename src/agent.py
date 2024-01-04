@@ -6,7 +6,10 @@ import requests
 import json
 import time
 
+# get web3
 web3 = Web3(Web3.HTTPProvider(get_json_rpc_url()))
+# use your own api key from Alchemy
+API_KEY = ""
 
 # step 1: check the transaction is creation or not
 # step 2: get the created contract
@@ -14,7 +17,7 @@ def calc_contract_address(address, nonce) -> str:
     address_bytes = bytes.fromhex(address[2:].lower())
     return Web3.toChecksumAddress(Web3.keccak(rlp.encode([address_bytes, nonce]))[-20:])
 
-def detect_contract_creations(transaction_event):
+def detect_contract_creations(w3, transaction_event):
     created_contract_addresses = []
 
     # check the external transaction
@@ -43,14 +46,12 @@ def get_logic_contract(proxy):
 # step 4: get the real called logic contract from simulating a tx 
 # step 5: compare these two contracts
 FORTA_DEVELOPER = "0xb37dd8269d2d81d8954983a9d3c67fec5e1f9837" # can be any eoa address
-def alchemy_simulate_transaction(proxy_contract, logic_contract):
+def alchemy_simulate_transaction(api_key, proxy_contract, logic_contract):
     # If you're a free tier user, your rate limit is 330 Compute Units per second.
     # https://docs.alchemy.com/reference/compute-unit-costs
     tries = 3
     for i in range(tries):
         try: 
-            # use your own api key from Alchemy
-            api_key = "xxx"
             url = "https://eth-mainnet.g.alchemy.com/v2/" + api_key
             payload = {
                 "id": 1,
@@ -85,51 +86,44 @@ def alchemy_simulate_transaction(proxy_contract, logic_contract):
             return False, "No delegatecall during simulation"
 
         except KeyError as e:
-            print(response)
             if i < tries - 1:
                 time.sleep(1) 
                 continue
             else:
-                raise
+                raise Exception("Alechmy simulation error:", response.text)
         break
 
-
-
-def handle_transaction(transaction_event):
+def fake_standards(api_key, contracts):
     findings = []
 
-    # step 1: check the transaction is creation or not
-    # step 2: get the created contract
-    # TODO: no traces tested so far
-    contracts = detect_contract_creations(transaction_event)
+    # iterate every ERC1967 proxy contract
+    for contract in contracts:
+        # get storage slot at the ERC-1967 implementation slot
+        logic_contract = get_logic_contract(contract)
+        logic_contract = "0x" + logic_contract.hex()[26:]
+        if logic_contract == "0x0000000000000000000000000000000000000000":
+            continue
+
+        # get the real called logic contract from simulating a transaction and compare these two contracts
+        match, real_logic_contract = alchemy_simulate_transaction(api_key, contract, logic_contract)
+        if not match and real_logic_contract != "":
+            findings.append(Finding({
+                'name': 'Fake Standard Alert',
+                'description': f'Detected Fake Standard - Proxy: {contract}; Logic Contract at Storage: {logic_contract}; Real Logic Contract: {real_logic_contract}',
+                'alert_id': 'FORTA-1',
+                'type': FindingType.Suspicious,
+                'severity': FindingSeverity.High,
+                'metadata': {
+                    'proxy_contracct': contract,
+                    'logic_in_storage': logic_contract,
+                    'real_logic': real_logic_contract
+                }
+            }))
+    return findings
+
+def handle_transaction(transaction_event):
+    # get the created contract
+    contracts = detect_contract_creations(web3, transaction_event)
 
     # if no newly created contracts, return empty findings
-    if len(contracts) == 0:
-        return findings
-    else:
-        # iterate every ERC1967 proxy contract
-        for contract in contracts:
-            # step 3: get storage slot at the ERC-1967 implementation slot
-            logic_contract = get_logic_contract(contract)
-            logic_contract = "0x" + logic_contract.hex()[26:]
-            if logic_contract == "0x0000000000000000000000000000000000000000":
-                continue
-
-            # step 4: get the real called logic contract from simulating a tx 
-            # step 5: compare these two contracts
-            match, real_logic_contract = alchemy_simulate_transaction(contract, logic_contract)
-            if not match and real_logic_contract != "":
-                findings.append(Finding({
-                    'name': 'Fake Standard Alert',
-                    'description': f'Detected Fake Standard - Proxy: {contract}; Logic Contract at Storage: {logic_contract}; Real Logic Contract: {real_logic_contract}',
-                    'alert_id': 'FORTA-1',
-                    'type': FindingType.Suspicious,
-                    'severity': FindingSeverity.High,
-                    'metadata': {
-                        'proxy_contracct': contract,
-                        'logic_in_storage': logic_contract,
-                        'real_logic': real_logic_contract
-                    }
-                }))
-
-    return findings
+    return fake_standards(API_KEY, contracts)

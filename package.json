@@ -1,7 +1,7 @@
 {
   "name": "fake-standards",
   "displayName": "Fake Standards",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Fake Standards Detection",
   "longDescription": "The bot monitors all new contract creations and assess whether the created contract is a proxy contact implementing the ERC-1967 standard.",
   "repository": "https://github.com/MiaZmy1221/Forta-Bot-Fake-Standards",

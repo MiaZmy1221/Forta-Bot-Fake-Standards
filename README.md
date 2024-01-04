@@ -14,7 +14,7 @@ In cases where the logic contracts do not align, the bot issues an alert to high
 
 ## Configuration
 
-To simulate the transaction, the [Alchemy API Key](https://dashboard.alchemy.com) is used. Please configure the variable "API_KEY" in the "agent.py" and "agent_test.py". 
+To simulate the transaction, the [Alchemy API Key](https://dashboard.alchemy.com) is used. Please set the variable "API_KEY" with your api key in the "agent.py" and "agent_test.py". 
 
 ## Supported Chains
 

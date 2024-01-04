@@ -11,8 +11,7 @@ web3 = Web3(Web3.HTTPProvider(get_json_rpc_url()))
 # use your own api key from Alchemy
 API_KEY = ""
 
-# step 1: check the transaction is creation or not
-# step 2: get the created contract
+# get the created contract
 def calc_contract_address(address, nonce) -> str:
     address_bytes = bytes.fromhex(address[2:].lower())
     return Web3.toChecksumAddress(Web3.keccak(rlp.encode([address_bytes, nonce]))[-20:])
@@ -38,13 +37,12 @@ def detect_contract_creations(w3, transaction_event):
     return created_contract_addresses
 
 
-# step 3: get storage slot at the ERC-1967 implementation slot
+# get storage slot at the ERC-1967 implementation slot
 IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
 def get_logic_contract(proxy):
     return web3.eth.get_storage_at(Web3.toChecksumAddress(proxy), IMPLEMENTATION_SLOT)
 
-# step 4: get the real called logic contract from simulating a tx 
-# step 5: compare these two contracts
+# get the real called logic contract from simulating a tx and compare these two contracts
 FORTA_DEVELOPER = "0xb37dd8269d2d81d8954983a9d3c67fec5e1f9837" # can be any eoa address
 def alchemy_simulate_transaction(api_key, proxy_contract, logic_contract):
     # If you're a free tier user, your rate limit is 330 Compute Units per second.

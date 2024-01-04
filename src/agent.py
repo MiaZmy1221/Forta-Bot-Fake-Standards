@@ -1,4 +1,4 @@
-from forta_agent import get_json_rpc_url, EntityType
+from forta_agent import get_json_rpc_url, get_chain_id, EntityType
 from forta_agent import Finding, FindingType, FindingSeverity
 from web3 import Web3
 import rlp
@@ -6,10 +6,13 @@ import requests
 import json
 import time
 
+# use your own api key from Alchemy
+API_KEY_Ethereum = ""
+API_KEY_Polygon = ""
+API_KEY_Optimism = ""
+
 # get web3
 web3 = Web3(Web3.HTTPProvider(get_json_rpc_url()))
-# use your own api key from Alchemy
-API_KEY = ""
 
 # get the created contract
 def calc_contract_address(address, nonce) -> str:
@@ -44,13 +47,20 @@ def get_logic_contract(proxy):
 
 # get the real called logic contract from simulating a tx and compare these two contracts
 FORTA_DEVELOPER = "0xb37dd8269d2d81d8954983a9d3c67fec5e1f9837" # can be any eoa address
-def alchemy_simulate_transaction(api_key, proxy_contract, logic_contract):
-    # If you're a free tier user, your rate limit is 330 Compute Units per second.
-    # https://docs.alchemy.com/reference/compute-unit-costs
+def config_alchemy_api_key(api_keys):
+    chain_id = get_chain_id()
+    if chain_id == 1:
+        return "https://eth-mainnet.g.alchemy.com/v2/" + api_keys[0]
+    elif chain_id == 137:
+        return "https://polygon-mainnet.g.alchemy.com/v2/" + api_keys[1]
+    elif chain_id == 10:
+        return "https://opt-mainnet.g.alchemy.com/v2/" + api_keys[2]
+
+
+def alchemy_simulate_transaction(url, proxy_contract, logic_contract):
     tries = 3
     for i in range(tries):
         try: 
-            url = "https://eth-mainnet.g.alchemy.com/v2/" + api_key
             payload = {
                 "id": 1,
                 "jsonrpc": "2.0",
@@ -91,7 +101,7 @@ def alchemy_simulate_transaction(api_key, proxy_contract, logic_contract):
                 raise Exception("Alechmy simulation error:", response.text)
         break
 
-def fake_standards(api_key, contracts):
+def fake_standards(api_keys, contracts):
     findings = []
 
     # iterate every ERC1967 proxy contract
@@ -103,7 +113,8 @@ def fake_standards(api_key, contracts):
             continue
 
         # get the real called logic contract from simulating a transaction and compare these two contracts
-        match, real_logic_contract = alchemy_simulate_transaction(api_key, contract, logic_contract)
+        url = config_alchemy_api_key(api_keys)
+        match, real_logic_contract = alchemy_simulate_transaction(url, contract, logic_contract)
         if not match and real_logic_contract != "":
             findings.append(Finding({
                 'name': 'Fake Standard Alert',
@@ -114,14 +125,16 @@ def fake_standards(api_key, contracts):
                 'metadata': {
                     'proxy_contracct': contract,
                     'logic_in_storage': logic_contract,
-                    'real_logic': real_logic_contract
+                    'real_logic': real_logic_contract,
+                    'chain_id': get_chain_id(),
                 }
             }))
     return findings
 
+
 def handle_transaction(transaction_event):
     # get the created contract
     contracts = detect_contract_creations(web3, transaction_event)
-
     # if no newly created contracts, return empty findings
-    return fake_standards(API_KEY, contracts)
+    api_keys = [API_KEY_Ethereum, API_KEY_Polygon, API_KEY_Optimism]
+    return fake_standards(api_keys, contracts)

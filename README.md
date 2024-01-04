@@ -20,7 +20,6 @@ To simulate the transaction, the [Alchemy API Key](https://dashboard.alchemy.com
 
 - Ethereum
 - Polygon
-- BNB
 - Optimism
 
 ## Alerts
@@ -51,7 +50,8 @@ The result should be a finding of the fake standards implementation.
   "metadata": {
     "proxy_contracct": "0x407f5490cfa4cba715cb93645c988b504fcf0331",
     "logic_in_storage": "0xc1e97d3fc2810577289ee35e895a4f0e59481700",
-    "real_logic": "0x4674f9cf8fce3e9ff332015a0f0859baa60c2ded"
+    "real_logic": "0x4674f9cf8fce3e9ff332015a0f0859baa60c2ded",
+    "chain_id": 1,
   },
   "addresses": [],
   "labels": [],
